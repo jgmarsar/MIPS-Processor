@@ -11,6 +11,13 @@ architecture Test of MIPS_tb is
 	signal rst : std_logic := '1';
 begin
 	
+	U_DATA : entity work.datapath
+		port map(
+			clk  => clk,
+			mclk => mclk,
+			rst  => rst
+		);
+	
 	clk <= not clk after 60 ns;
 	mclk <= not mclk after 20 ns;
 	

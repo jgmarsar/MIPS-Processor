@@ -33,6 +33,12 @@ begin
 			for i in 1 to 31 loop
 				ra(i) <= (others => '0');
 			end loop;
+			--TEST PURPOSES ONLY; REMOVE
+			ra(1) <= x"0000000A";
+			ra(2) <= x"00000005";
+			ra(10) <= x"FFFFFFFF";
+			ra(20) <= x"FFFFFFFB";
+			--REMOVE
 		elsif (rising_edge(clk) and (wr='1') and (rw /= "00000")) then
 			ra(to_integer(unsigned(rw))) <= d;
 		end if;

@@ -42,7 +42,7 @@ begin
 		)
 		port map(
 			D   => PC_next,
-			wr  => '0',
+			wr  => '1',
 			Clk => clk,
 			clr => rst,
 			Q   => PC
