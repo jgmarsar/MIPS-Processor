@@ -15,17 +15,24 @@ architecture STR of datapath is
 	signal PC : std_logic_vector(31 downto 0);
 	signal PC_next : std_logic_vector(31 downto 0);
 	
+	--instruction signals
 	signal instruction : std_logic_vector(31 downto 0);
+	signal ext_imm : std_logic_vector(31 downto 0);
 	
 	--control signals
 	signal ALUop : std_logic_vector(2 downto 0);
 	signal regWrite : std_logic;
+	signal ALUSrc : std_logic;
+	signal regDst : std_logic;
 	
 	--register file signals
+	signal rw : std_logic_vector(4 downto 0);
 	signal q0 : std_logic_vector(31 downto 0);
 	signal q1 : std_logic_vector(31 downto 0);
 	
+	
 	--ALU I/O signals
+	signal srcb : std_logic_vector(31 downto 0);
 	signal shdir : std_logic;
 	signal ALUcont : std_logic_vector(3 downto 0);
 	signal ALUout : std_logic_vector(31 downto 0);
@@ -72,7 +79,7 @@ begin
 		port map(
 			rr0 => instruction(25 downto 21),	--source register
 			rr1 => instruction(20 downto 16),	--source register
-			rw  => instruction(15 downto 11),	--destination register
+			rw  => rw,							--destination register from MUX
 			d   => ALUout,
 			clk => clk,
 			wr  => regWrite,
@@ -81,11 +88,21 @@ begin
 			q1  => q1
 		);
 		
+	U_REG_MUX : entity work.mux5
+		port map(
+			in0 => instruction(20 downto 16),
+			in1 => instruction(15 downto 11),
+			Sel => regDst,
+			O   => rw
+		);
+		
 	U_CONTROL : entity work.control
 		port map(
 			opcode => instruction(31 downto 26),
 			ALUop  => ALUop,
-			wr     => regWrite
+			wr     => regWrite,
+			ALUSrc => ALUSrc,
+			regDst => regDst
 		);
 		
 	U_ALU_CONT : entity work.alu32control
@@ -96,11 +113,17 @@ begin
 			shdir   => shdir
 		);
 		
+	U_SIGN_EXT : entity work.signext
+		port map(
+			in0  => instruction(15 downto 0),		--immediate
+			out0 => ext_imm
+		);
+		
 	--INSTRUCTION EXECUTE
 	U_ALU : entity work.alu32
 		port map(
 			ia      => q0,
-			ib      => q1,
+			ib      => srcb,
 			control => ALUcont,
 			shamt   => instruction(10 downto 6),
 			shdir   => shdir,
@@ -110,6 +133,13 @@ begin
 			V       => V,
 			S       => S
 		);
-	
+		
+	U_ALU_MUX : entity work.mux32
+		port map(
+			in0 => q1,
+			in1 => ext_imm,
+			Sel => ALUSrc,
+			O   => srcb
+		);	
 end architecture STR;
 
