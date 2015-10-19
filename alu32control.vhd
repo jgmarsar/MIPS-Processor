@@ -20,7 +20,7 @@ begin
 		case ALUop is
 			when "000" => --addi, addiu, lbu, lhu, lui, lw, sb, sh, sw (All imm add functions)
 				control <= "0010";
-			when "001" => --beq, bne, slti, sltiu (All imm sub functions)
+			when "001" => --beq, bne (imm sub functions)
 				control <= "0110";
 			when "010" =>
 				case func is
@@ -56,6 +56,10 @@ begin
 				control <= "0000";
 			when "100" => --ori
 				control <= "0001";
+			when "101" => --slti
+				control <= "0111";
+			when "110" => --stliu
+				control <= "1111";
 			when others => null;
 		end case;
 		

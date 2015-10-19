@@ -24,6 +24,7 @@ architecture STR of datapath is
 	signal regWrite : std_logic;
 	signal ALUSrc : std_logic;
 	signal regDst : std_logic;
+	signal ext_sel : std_logic;
 	
 	--register file signals
 	signal rw : std_logic_vector(4 downto 0);
@@ -102,7 +103,8 @@ begin
 			ALUop  => ALUop,
 			wr     => regWrite,
 			ALUSrc => ALUSrc,
-			regDst => regDst
+			regDst => regDst,
+			ext_sel => ext_sel
 		);
 		
 	U_ALU_CONT : entity work.alu32control
@@ -113,9 +115,10 @@ begin
 			shdir   => shdir
 		);
 		
-	U_SIGN_EXT : entity work.signext
+	U_EXT : entity work.extender
 		port map(
 			in0  => instruction(15 downto 0),		--immediate
+			Sel => ext_sel,
 			out0 => ext_imm
 		);
 		
