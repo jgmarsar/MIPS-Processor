@@ -9,6 +9,7 @@ entity alu32 is
 		control : in std_logic_vector(3 downto 0);
 		shamt : in std_logic_vector(4 downto 0);
 		shdir : in std_logic;
+		sh16 : in std_logic;
 		o : out std_logic_vector(31 downto 0);
 		C : out std_logic;
 		Z : out std_logic;
@@ -25,7 +26,7 @@ architecture ARC of alu32 is
 	signal Vtemp : std_logic;
 	signal o_temp : std_logic_vector(31 downto 0);
 begin
-	process(ia, ib, control, shamt, shdir, Ctemp, Vtemp, sum)
+	process(ia, ib, control, shamt, shdir, sh16, Ctemp, Vtemp, sum)
 		variable temp_sum : std_logic_vector(31 downto 0); --necessary?
 		--variable o_temp : std_logic_vector(31 downto 0);
 	begin
@@ -46,7 +47,9 @@ begin
 				C <= Ctemp;
 				V <= Vtemp;
 			when "0011" => --shift
-				if (shdir = '0') then
+				if (sh16 = '1') then
+					o_temp <= std_logic_vector(unsigned(ib) sll 16);
+				elsif (shdir = '0') then
 					o_temp <= std_logic_vector(unsigned(ib) sll to_integer(unsigned(shamt)));
 				else
 					o_temp <= std_logic_vector(unsigned(ib) srl to_integer(unsigned(shamt)));

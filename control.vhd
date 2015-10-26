@@ -94,6 +94,13 @@ begin
 				ALUSrc <= C_IMM;
 				regDst <= C_RT;
 				ext_sel <= C_ZERO;
+			when "001111" =>			--LUI
+				ALUop <= "111";
+				wr <= '1';
+				WriteDataSel <= C_ALU;
+				ALUSrc <= C_IMM;
+				regDst <= C_RT;
+				ext_sel <= C_ZERO;
 			when "100011" =>			--LW
 				ALUop <= "000";
 				wr <= '1';

@@ -63,7 +63,7 @@ BEGIN
 	GENERIC MAP (
 		clock_enable_input_a => "BYPASS",
 		clock_enable_output_a => "BYPASS",
-		init_file => "../../../../../Visual Studio 2013/EEL4713/Lab2/Lab2/lbu_test.mif",
+		init_file => "../../../../../Visual Studio 2013/EEL4713/Lab2/Lab2/lui_test.mif",
 		intended_device_family => "Cyclone IV GX",
 		lpm_hint => "ENABLE_RUNTIME_MOD=NO",
 		lpm_type => "altsyncram",

@@ -38,6 +38,7 @@ architecture STR of datapath is
 	--ALU I/O signals
 	signal srcb : std_logic_vector(31 downto 0);
 	signal shdir : std_logic;
+	signal sh16 : std_logic;
 	signal ALUcont : std_logic_vector(3 downto 0);
 	signal ALUout : std_logic_vector(31 downto 0);
 	signal C : std_logic;
@@ -124,7 +125,8 @@ begin
 			ALUop   => ALUop,
 			func    => instruction(5 downto 0),
 			control => ALUcont,
-			shdir   => shdir
+			shdir   => shdir,
+			sh16	=> sh16
 		);
 		
 	U_EXT : entity work.extender
@@ -142,6 +144,7 @@ begin
 			control => ALUcont,
 			shamt   => instruction(10 downto 6),
 			shdir   => shdir,
+			sh16	=> sh16,
 			o       => ALUout,
 			C       => C,
 			Z       => Z,

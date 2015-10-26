@@ -7,7 +7,8 @@ entity alu32control is
 		ALUop : in std_logic_vector(2 downto 0);
 		func : in std_logic_vector(5 downto 0);
 		control : out std_logic_vector(3 downto 0);
-		shdir : out std_logic
+		shdir : out std_logic;
+		sh16 : out std_logic
 	);
 end alu32control;
 
@@ -17,8 +18,9 @@ begin
 	begin
 		control <= "0000";
 		shdir <= '0';
+		sh16 <= '0';
 		case ALUop is
-			when "000" => --addi, addiu, lbu, lhu, lui, lw, sb, sh, sw (All imm add functions)
+			when "000" => --addi, addiu, lbu, lhu, lw, sb, sh, sw (All imm add functions)
 				control <= "0010";
 			when "001" => --beq, bne (imm sub functions)
 				control <= "0110";
@@ -60,6 +62,9 @@ begin
 				control <= "0111";
 			when "110" => --stliu
 				control <= "1111";
+			when "111" => --lui
+				control <= "0011";
+				sh16 <= '1';
 			when others => null;
 		end case;
 		
