@@ -9,7 +9,9 @@ entity control is
 		wr : out std_logic;
 		ALUSrc : out std_logic;
 		regDst : out std_logic;
-		ext_sel : out std_logic
+		ext_sel : out std_logic;
+		WriteDataSel : out std_logic;
+		MemWrite : out std_logic
 	);
 end entity control;
 
@@ -23,6 +25,9 @@ architecture BHV of control is
 	--ext_sel select
 	constant C_ZERO : std_logic := '0';
 	constant C_SIGN : std_logic := '1';
+	--WriteDataSel
+	constant C_ALU : std_logic := '0';
+	constant C_MEM : std_logic := '1';
 begin
 	process(opcode)
 	begin
@@ -31,25 +36,70 @@ begin
 		ALUSrc <= '0';
 		regDst <= '0';
 		ext_sel <= '0';
+		WriteDataSel <= '0';
+		MemWrite <= '0';
 		
 		case opcode is
 			when "000000" =>			--R-type
 				ALUop <= "010";
 				wr <= '1';
+				WriteDataSel <= C_ALU;
 				ALUSrc <= C_Q1;
 				regDst <= C_RD;
 			when "001000" =>			--ADDI
 				ALUop <= "000";
 				wr <= '1';
+				WriteDataSel <= C_ALU;
 				ALUSrc <= C_IMM;
 				regDst <= C_RT;
 				ext_sel <= C_SIGN;
 			when "001001" =>			--ADDIU
 				ALUop <= "000";
 				wr <= '1';
+				WriteDataSel <= C_ALU;
 				ALUSrc <= C_IMM;
 				regDst <= C_RT;
 				ext_sel <= C_ZERO;
+			when "001010" =>			--SLTI
+				ALUop <= "101";
+				wr <= '1';
+				WriteDataSel <= C_ALU;
+				ALUSrc <= C_IMM;
+				regDst <= C_RT;
+				ext_sel <= C_SIGN;
+			when "001011" =>			--SLTIU
+				ALUop <= "110";
+				wr <= '1';
+				WriteDataSel <= C_ALU;
+				ALUSrc <= C_IMM;
+				regDst <= C_RT;
+				ext_sel <= C_ZERO;
+			when "001100" =>			--ANDI
+				ALUop <= "011";
+				wr <= '1';
+				WriteDataSel <= C_ALU;
+				ALUSrc <= C_IMM;
+				regDst <= C_RT;
+				ext_sel <= C_ZERO;
+			when "001101" =>			--ORI
+				ALUop <= "100";
+				wr <= '1';
+				WriteDataSel <= C_ALU;
+				ALUSrc <= C_IMM;
+				regDst <= C_RT;
+				ext_sel <= C_ZERO;
+			when "100011" =>			--LW
+				ALUop <= "000";
+				wr <= '1';
+				WriteDataSel <= C_MEM;
+				ALUSrc <= C_IMM;
+				regDst <= C_RT;
+				ext_sel <= C_SIGN;
+			when "101011" =>			--SW
+				ALUop <= "000";
+				ALUSrc <= C_IMM;
+				ext_sel <= C_SIGN;
+				MemWrite <= '1';
 			when others => null;
 		end case;
 		

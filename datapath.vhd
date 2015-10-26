@@ -25,12 +25,14 @@ architecture STR of datapath is
 	signal ALUSrc : std_logic;
 	signal regDst : std_logic;
 	signal ext_sel : std_logic;
+	signal WriteDataSel : std_logic;
+	signal MemWrite : std_logic;
 	
 	--register file signals
 	signal rw : std_logic_vector(4 downto 0);
 	signal q0 : std_logic_vector(31 downto 0);
 	signal q1 : std_logic_vector(31 downto 0);
-	
+	signal WBData : std_logic_vector(31 downto 0);
 	
 	--ALU I/O signals
 	signal srcb : std_logic_vector(31 downto 0);
@@ -41,6 +43,9 @@ architecture STR of datapath is
 	signal V : std_logic;
 	signal S : std_logic;
 	signal Z : std_logic;
+	
+	--data memory signals
+	signal dataOut : std_logic_vector(31 downto 0);
 	
 begin
 	--INSTRUCTION FETCH
@@ -81,7 +86,7 @@ begin
 			rr0 => instruction(25 downto 21),	--source register
 			rr1 => instruction(20 downto 16),	--source register
 			rw  => rw,							--destination register from MUX
-			d   => ALUout,
+			d   => WBData,
 			clk => clk,
 			wr  => regWrite,
 			rst => rst,
@@ -104,7 +109,9 @@ begin
 			wr     => regWrite,
 			ALUSrc => ALUSrc,
 			regDst => regDst,
-			ext_sel => ext_sel
+			ext_sel => ext_sel,
+			WriteDataSel => WriteDataSel,
+			MemWrite => MemWrite
 		);
 		
 	U_ALU_CONT : entity work.alu32control
@@ -143,6 +150,25 @@ begin
 			in1 => ext_imm,
 			Sel => ALUSrc,
 			O   => srcb
-		);	
+		);
+		
+	--WRITE BACK
+	U_DATA_MEM : entity work.data_mem
+		port map(
+			address => ALUout(9 downto 2),		--word addressed; ignore 2 LSBs
+			byteena => open,
+			clock   => mclk,
+			data    => q1,
+			wren    => MemWrite,
+			q       => dataOut
+		);
+		
+	U_WB_MUX : entity work.mux32
+		port map(
+			in0 => ALUout,
+			in1 => dataOut,
+			Sel => WriteDataSel,
+			O   => WBData
+		);
 end architecture STR;
 
