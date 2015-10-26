@@ -27,6 +27,7 @@ architecture STR of datapath is
 	signal ext_sel : std_logic;
 	signal WriteDataSel : std_logic;
 	signal MemWrite : std_logic;
+	signal sizeSel : std_logic_vector(1 downto 0);
 	
 	--register file signals
 	signal rw : std_logic_vector(4 downto 0);
@@ -45,7 +46,10 @@ architecture STR of datapath is
 	signal Z : std_logic;
 	
 	--data memory signals
-	signal dataOut : std_logic_vector(31 downto 0);
+	signal readData : std_logic_vector(31 downto 0);
+	signal byteEnable : std_logic_vector(3 downto 0);
+	signal writeData : std_logic_vector(31 downto 0);
+	signal readDataAdj : std_logic_vector(31 downto 0);
 	
 begin
 	--INSTRUCTION FETCH
@@ -111,7 +115,8 @@ begin
 			regDst => regDst,
 			ext_sel => ext_sel,
 			WriteDataSel => WriteDataSel,
-			MemWrite => MemWrite
+			MemWrite => MemWrite,
+			sizeSel => sizeSel
 		);
 		
 	U_ALU_CONT : entity work.alu32control
@@ -151,22 +156,43 @@ begin
 			Sel => ALUSrc,
 			O   => srcb
 		);
+	
+	U_BYTE_CONT : entity work.byte_control
+		port map(
+			sizeSel    => sizeSel,
+			byteSel    => ALUout(1 downto 0),
+			byteEnable => byteEnable
+		);
+		
+	U_BYTE_ADJ_WR : entity work.byte_adj_write
+		port map(
+			dataIn     => q1,
+			byteEnable => byteEnable,
+			dataOut    => writeData
+		);
 		
 	--WRITE BACK
 	U_DATA_MEM : entity work.data_mem
 		port map(
 			address => ALUout(9 downto 2),		--word addressed; ignore 2 LSBs
-			byteena => open,
+			byteena => byteEnable,
 			clock   => mclk,
-			data    => q1,
+			data    => writeData,
 			wren    => MemWrite,
-			q       => dataOut
+			q       => readData
+		);
+		
+	U_BYTE_ADJ_RD : entity work.byte_adj_read
+		port map(
+			dataIn     => readData,
+			byteEnable => byteEnable,
+			dataOut    => readDataAdj
 		);
 		
 	U_WB_MUX : entity work.mux32
 		port map(
 			in0 => ALUout,
-			in1 => dataOut,
+			in1 => readDataAdj,
 			Sel => WriteDataSel,
 			O   => WBData
 		);
