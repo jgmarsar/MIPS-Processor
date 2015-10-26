@@ -13,7 +13,9 @@ end entity datapath;
 architecture STR of datapath is
 	--Program Counter signals
 	signal PC : std_logic_vector(31 downto 0);
-	signal PC_next : std_logic_vector(31 downto 0);
+	signal PC4 : std_logic_vector(31 downto 0);
+	signal PC_next : std_logic_vector (31 downto 0);
+	signal jump_addr : std_logic_vector(31 downto 0);
 	
 	--instruction signals
 	signal instruction : std_logic_vector(31 downto 0);
@@ -28,6 +30,7 @@ architecture STR of datapath is
 	signal WriteDataSel : std_logic;
 	signal MemWrite : std_logic;
 	signal sizeSel : std_logic_vector(1 downto 0);
+	signal jump : std_logic;
 	
 	--register file signals
 	signal rw : std_logic_vector(4 downto 0);
@@ -66,16 +69,6 @@ begin
 			Q   => PC
 		);
 		
-	U_ADD4 : entity work.add32
-		port map(
-			in0  => PC,
-			in1  => x"00000004",
-			cin  => '0',
-			sum  => PC_next,
-			cout => open,
-			V    => open
-		);
-		
 	U_INST_MEM : entity work.inst_mem
 		port map(
 			address => PC(9 downto 2),			--8-bit address; increments of 4 only, so ignore lowest 2 bits
@@ -83,6 +76,35 @@ begin
 			data    => (others => '0'),
 			wren    => '0',
 			q       => instruction
+		);
+		
+	--PC Update
+	U_ADD4 : entity work.add32
+		port map(
+			in0  => PC,
+			in1  => x"00000004",
+			cin  => '0',
+			sum  => PC4,
+			cout => open,
+			V    => open
+		);
+		
+	U_JUMP_SH : entity work.shiftL2
+		generic map(
+			widthIn => 26
+		)
+		port map(
+			input  => instruction(25 downto 0),
+			output => jump_addr(27 downto 0)
+		);
+	jump_addr(31 downto 28) <= PC4(31 downto 28);		--jump address includes top four bits of current PC
+	
+	U_JUMP_MUX : entity work.mux32
+		port map(
+			in0 => PC4,
+			in1 => jump_addr,
+			Sel => jump,
+			O   => PC_next
 		);
 		
 	--INSTRUCTION DECODE
@@ -117,7 +139,8 @@ begin
 			ext_sel => ext_sel,
 			WriteDataSel => WriteDataSel,
 			MemWrite => MemWrite,
-			sizeSel => sizeSel
+			sizeSel => sizeSel,
+			jump => jump
 		);
 		
 	U_ALU_CONT : entity work.alu32control

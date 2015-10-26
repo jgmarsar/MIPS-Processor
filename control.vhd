@@ -12,7 +12,8 @@ entity control is
 		ext_sel : out std_logic;
 		WriteDataSel : out std_logic;
 		MemWrite : out std_logic;
-		sizeSel : out std_logic_vector(1 downto 0)
+		sizeSel : out std_logic_vector(1 downto 0);
+		jump : out std_logic
 	);
 end entity control;
 
@@ -44,6 +45,7 @@ begin
 		WriteDataSel <= '0';
 		MemWrite <= '0';
 		sizeSel <= "00";
+		jump <= '0';
 		
 		case opcode is
 			when "000000" =>			--R-type
@@ -52,6 +54,8 @@ begin
 				WriteDataSel <= C_ALU;
 				ALUSrc <= C_Q1;
 				regDst <= C_RD;
+			when "000010" =>			--J
+				jump <= '1';
 			when "001000" =>			--ADDI
 				ALUop <= "000";
 				wr <= '1';
