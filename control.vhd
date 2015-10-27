@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 entity control is
 	port (
 		opcode : in std_logic_vector(5 downto 0);
+		func : in std_logic_vector(5 downto 0);
 		ALUop : out std_logic_vector(2 downto 0);
 		wr : out std_logic;
 		ALUSrc : out std_logic;
@@ -13,7 +14,9 @@ entity control is
 		WriteDataSel : out std_logic;
 		MemWrite : out std_logic;
 		sizeSel : out std_logic_vector(1 downto 0);
-		jump : out std_logic
+		jump : out std_logic;
+		jtype : out std_logic;
+		jal : out std_logic
 	);
 end entity control;
 
@@ -34,6 +37,9 @@ architecture BHV of control is
 	constant C_WORD : std_logic_vector(1 downto 0) := "10";
 	constant C_HALF : std_logic_vector(1 downto 0) := "01";
 	constant C_BYTE : std_logic_vector(1 downto 0) := "00";
+	--jtype select
+	constant C_JIMM : std_logic := '0';
+	constant C_JREG : std_logic := '1';
 begin
 	process(opcode)
 	begin
@@ -46,6 +52,8 @@ begin
 		MemWrite <= '0';
 		sizeSel <= "00";
 		jump <= '0';
+		jtype <= '0';
+		jal <= '0';
 		
 		case opcode is
 			when "000000" =>			--R-type
@@ -54,8 +62,19 @@ begin
 				WriteDataSel <= C_ALU;
 				ALUSrc <= C_Q1;
 				regDst <= C_RD;
+				if (func = "001000") then		--JR
+					jump <= '1';
+					jtype <= C_JREG;
+					wr <= '0';
+				end if;
 			when "000010" =>			--J
 				jump <= '1';
+				jtype <= C_JIMM;
+			when "000011" =>			--JAL
+				jump <= '1';
+				jtype <= C_JIMM;
+				jal <= '1';
+				wr <= '1';
 			when "001000" =>			--ADDI
 				ALUop <= "000";
 				wr <= '1';

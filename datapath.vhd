@@ -14,7 +14,9 @@ architecture STR of datapath is
 	--Program Counter signals
 	signal PC : std_logic_vector(31 downto 0);
 	signal PC4 : std_logic_vector(31 downto 0);
+	signal PC8 : std_logic_vector(31 downto 0);
 	signal PC_next : std_logic_vector (31 downto 0);
+	signal jump_imm : std_logic_vector (31 downto 0);
 	signal jump_addr : std_logic_vector(31 downto 0);
 	
 	--instruction signals
@@ -31,12 +33,16 @@ architecture STR of datapath is
 	signal MemWrite : std_logic;
 	signal sizeSel : std_logic_vector(1 downto 0);
 	signal jump : std_logic;
+	signal jtype : std_logic;
+	signal jal : std_logic;
 	
 	--register file signals
+	signal inst_rw : std_logic_vector(4 downto 0);
 	signal rw : std_logic_vector(4 downto 0);
 	signal q0 : std_logic_vector(31 downto 0);
 	signal q1 : std_logic_vector(31 downto 0);
 	signal WBData : std_logic_vector(31 downto 0);
+	signal regData : std_logic_vector(31 downto 0);
 	
 	--ALU I/O signals
 	signal srcb : std_logic_vector(31 downto 0);
@@ -95,9 +101,9 @@ begin
 		)
 		port map(
 			input  => instruction(25 downto 0),
-			output => jump_addr(27 downto 0)
+			output => jump_imm(27 downto 0)
 		);
-	jump_addr(31 downto 28) <= PC4(31 downto 28);		--jump address includes top four bits of current PC
+	jump_imm(31 downto 28) <= PC4(31 downto 28);		--jump address includes top four bits of current PC
 	
 	U_JUMP_MUX : entity work.mux32
 		port map(
@@ -107,13 +113,31 @@ begin
 			O   => PC_next
 		);
 		
+	U_JTYPE_MUX : entity work.mux32
+		port map(
+			in0 => jump_imm,
+			in1 => ALUout,
+			Sel => jtype,
+			O   => jump_addr
+		);
+		
+	U_ADD8 : entity work.add32
+		port map(
+			in0  => PC,
+			in1  => x"00000008",
+			cin  => '0',
+			sum  => PC8,
+			cout => open,
+			V    => open
+		);
+		
 	--INSTRUCTION DECODE
 	U_REGS : entity work.registerFile
 		port map(
 			rr0 => instruction(25 downto 21),	--source register
 			rr1 => instruction(20 downto 16),	--source register
 			rw  => rw,							--destination register from MUX
-			d   => WBData,
+			d   => regData,
 			clk => clk,
 			wr  => regWrite,
 			rst => rst,
@@ -121,17 +145,26 @@ begin
 			q1  => q1
 		);
 		
-	U_REG_MUX : entity work.mux5
+	U_REG_MUX1 : entity work.mux5		--select between rt and rd
 		port map(
 			in0 => instruction(20 downto 16),
 			in1 => instruction(15 downto 11),
 			Sel => regDst,
+			O   => inst_rw
+		);
+		
+	U_REG_MUX2 : entity work.mux5		--select between rt/rd or $31 (for jal instruction)
+		port map(
+			in0 => inst_rw,
+			in1 => "11111",
+			Sel => jal,
 			O   => rw
 		);
 		
 	U_CONTROL : entity work.control
 		port map(
 			opcode => instruction(31 downto 26),
+			func => instruction(5 downto 0),
 			ALUop  => ALUop,
 			wr     => regWrite,
 			ALUSrc => ALUSrc,
@@ -140,7 +173,9 @@ begin
 			WriteDataSel => WriteDataSel,
 			MemWrite => MemWrite,
 			sizeSel => sizeSel,
-			jump => jump
+			jump => jump,
+			jtype => jtype,
+			jal => jal
 		);
 		
 	U_ALU_CONT : entity work.alu32control
@@ -215,12 +250,20 @@ begin
 			dataOut    => readDataAdj
 		);
 		
-	U_WB_MUX : entity work.mux32
+	U_WB_MUX1 : entity work.mux32				--select between ALU and Memory data
 		port map(
 			in0 => ALUout,
 			in1 => readDataAdj,
 			Sel => WriteDataSel,
 			O   => WBData
+		);
+		
+	U_WB_MUX2 : entity work.mux32				--select between write back data and PC+8 (for jal instruction)
+		port map(
+			in0 => WBdata,
+			in1 => PC8,
+			Sel => jal,
+			O   => regData
 		);
 end architecture STR;
 
