@@ -16,7 +16,9 @@ entity control is
 		sizeSel : out std_logic_vector(1 downto 0);
 		jump : out std_logic;
 		jtype : out std_logic;
-		jal : out std_logic
+		jal : out std_logic;
+		BEQ : out std_logic;
+		BNE : out std_logic
 	);
 end entity control;
 
@@ -54,6 +56,8 @@ begin
 		jump <= '0';
 		jtype <= '0';
 		jal <= '0';
+		BEQ <= '0';
+		BNE <= '0';
 		
 		case opcode is
 			when "000000" =>			--R-type
@@ -75,6 +79,18 @@ begin
 				jtype <= C_JIMM;
 				jal <= '1';
 				wr <= '1';
+			when "000100" =>			--BEQ
+				ALUop <= "001";
+				ALUSrc <= C_Q1;
+				ext_sel <= C_SIGN;
+				jump <= '0';
+				BEQ <= '1';
+			when "000101" =>			--BNE
+				ALUop <= "001";
+				ALUSrc <= C_Q1;
+				ext_sel <= C_SIGN;
+				jump <= '0';
+				BNE <= '1';
 			when "001000" =>			--ADDI
 				ALUop <= "000";
 				wr <= '1';

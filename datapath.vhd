@@ -18,6 +18,10 @@ architecture STR of datapath is
 	signal PC_next : std_logic_vector (31 downto 0);
 	signal jump_imm : std_logic_vector (31 downto 0);
 	signal jump_addr : std_logic_vector(31 downto 0);
+	signal PC_no_branch : std_logic_vector(31 downto 0);
+	signal PC_branch : std_logic_vector(31 downto 0);
+	signal offset : std_logic_vector(33 downto 0);
+	signal branch : std_logic;
 	
 	--instruction signals
 	signal instruction : std_logic_vector(31 downto 0);
@@ -35,6 +39,8 @@ architecture STR of datapath is
 	signal jump : std_logic;
 	signal jtype : std_logic;
 	signal jal : std_logic;
+	signal BEQ : std_logic;
+	signal BNE : std_logic;
 	
 	--register file signals
 	signal inst_rw : std_logic_vector(4 downto 0);
@@ -110,7 +116,7 @@ begin
 			in0 => PC4,
 			in1 => jump_addr,
 			Sel => jump,
-			O   => PC_next
+			O   => PC_no_branch
 		);
 		
 	U_JTYPE_MUX : entity work.mux32
@@ -129,6 +135,41 @@ begin
 			sum  => PC8,
 			cout => open,
 			V    => open
+		);
+		
+	U_BRANCH_SH : entity work.shiftL2
+		generic map(
+			widthIn => 32
+		)
+		port map(
+			input  => ext_imm,
+			output => offset
+		);
+		
+	U_BRANCH_ADD : entity work.add32
+		port map(
+			in0  => PC_no_branch,
+			in1  => offset(31 downto 0),
+			cin  => '0',
+			sum  => PC_branch,
+			cout => open,
+			V    => open
+		);
+		
+	U_BRANCH_CONT : entity work.branch_control
+		port map(
+			BEQ    => BEQ,
+			BNE    => BNE,
+			Z      => Z,
+			branch => branch
+		);
+		
+	U_BRANCH_MUX : entity work.mux32
+		port map(
+			in0 => PC_no_branch,
+			in1 => PC_branch,
+			Sel => branch,
+			O   => PC_next
 		);
 		
 	--INSTRUCTION DECODE
@@ -175,7 +216,9 @@ begin
 			sizeSel => sizeSel,
 			jump => jump,
 			jtype => jtype,
-			jal => jal
+			jal => jal,
+			BEQ => BEQ,
+			BNE => BNE
 		);
 		
 	U_ALU_CONT : entity work.alu32control
