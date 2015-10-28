@@ -14,7 +14,6 @@ architecture STR of datapath is
 	--Program Counter signals
 	signal PC : std_logic_vector(31 downto 0);
 	signal PC4 : std_logic_vector(31 downto 0);
-	signal PC8 : std_logic_vector(31 downto 0);
 	signal PC_next : std_logic_vector (31 downto 0);
 	signal jump_imm : std_logic_vector (31 downto 0);
 	signal jump_addr : std_logic_vector(31 downto 0);
@@ -125,16 +124,6 @@ begin
 			in1 => ALUout,
 			Sel => jtype,
 			O   => jump_addr
-		);
-		
-	U_ADD8 : entity work.add32
-		port map(
-			in0  => PC,
-			in1  => x"00000008",
-			cin  => '0',
-			sum  => PC8,
-			cout => open,
-			V    => open
 		);
 		
 	U_BRANCH_SH : entity work.shiftL2
@@ -301,10 +290,10 @@ begin
 			O   => WBData
 		);
 		
-	U_WB_MUX2 : entity work.mux32				--select between write back data and PC+8 (for jal instruction)
+	U_WB_MUX2 : entity work.mux32				--select between write back data and PC+4 (for jal instruction)
 		port map(
 			in0 => WBdata,
-			in1 => PC8,
+			in1 => PC4,
 			Sel => jal,
 			O   => regData
 		);
