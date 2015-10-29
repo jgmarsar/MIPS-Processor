@@ -6,7 +6,8 @@ entity datapath is
 	port (
 		clk : in std_logic;
 		mclk : in std_logic;
-		rst : in std_logic
+		rst : in std_logic;
+		PCout : out std_logic_vector(31 downto 0)
 	);
 end entity datapath;
 
@@ -297,5 +298,7 @@ begin
 			Sel => jal,
 			O   => regData
 		);
+		
+	PCout <= PC;
 end architecture STR;
 
