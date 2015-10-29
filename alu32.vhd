@@ -64,19 +64,19 @@ begin
 				in1 <= not ib;
 				cin <= '1';
 				temp_sum := sum;
-				if (temp_sum(31) = '1') then
-					--if output is negative, a < b
+				if ((temp_sum(31) xor Vtemp) = '1' and (temp_sum /= x"00000000")) then
+					--if output is negative without overflow or positive with overflow and non-zero, a < b
 					o_temp <= std_logic_vector(to_unsigned(1, 32));
 				end if;	
 				C <= Ctemp;
 				V <= Vtemp;
 			when "1100" =>
 				o_temp <= ia nor ib;
-			when "1111" =>
+			when "1111" => --unsigned slt
 				in1 <= not ib;
 				cin <= '1';
-				if (Ctemp = '0') then
-					--if carry out is 0, a < b (for unsigned subtraction)
+				if (Ctemp = '0' and (temp_sum /= x"00000000")) then
+					--if carry out is 0 and output is non-zero, a < b (for unsigned subtraction)
 					o_temp <= std_logic_vector(to_unsigned(1, 32));
 				end if;	
 				C <= Ctemp;
